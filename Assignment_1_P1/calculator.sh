@@ -6,7 +6,6 @@ calculate_parentheses() {
     echo "$result"
 }
 
-# Main calculation function
 calculate() {
     local expression="$1"
     local result="$expression"
