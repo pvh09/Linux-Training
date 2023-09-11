@@ -1,30 +1,41 @@
 #!/bin/bash
-# Check if two command-line arguments are provided
-if [ $# -ne 3 ]; then
-    echo "Usage: $0 <num1> <operator> <num3>"
-    exit 1
-fi
-# Retrieve the two numbers from command-line arguments
-num1="$1"
-operator="$2"
-num2="$3"
-# Perform the operation based on the operator
-if [ "$operator" = "+" ]; then
-    result=$((num1 + num2))
-    operation="addition"
-elif [ "$operator" = "-" ]; then
-    result=$((num1 - num2))
-    operation="subtraction"
-elif [ "$operator" = "x" ]; then
-    result=$((num1 * num2))
-    operation="multiplication"
-elif [ "$operator" = "/" ]; then
-    result=$((num1 / num2))
-    operation="division"
-else
-    echo "Invalid operator: $operator"
+calculate_parentheses() {
+    local input="$1"
+    local result
+    result=$(echo "$input" | bc)
+    echo "$result"
+}
+
+# Main calculation function
+calculate() {
+    local expression="$1"
+    local result="$expression"
+
+    local pattern="\(([^()]*)\)"
+
+    # Find innermost parentheses and calculate their contents until no more parentheses are found
+    while [[ $result =~ $pattern ]];do
+        inner_expr="${BASH_REMATCH[1]}"
+        inner_result=$(calculate_parentheses "$inner_expr")
+        result=${result//"${BASH_REMATCH[0]}"/$inner_result}
+    done
+
+    # Use bc to evaluate the final expression
+    final_result=$(echo "$result" | bc)
+
+    echo "$final_result"
+}
+
+# Check if at least one argument is provided
+if [ $# -lt 1 ]; then
+    echo "Usage: $0 <expression>"
     exit 1
 fi
 
-# Display the result and operation
-echo "The $operation of $num1 $operator $num2 is: $result"
+expression="$*"
+# Replace 'x' with '*' for multiplication
+expression="${expression//x/*}"
+result=$(calculate "$expression")
+
+echo "Result: $result"
+
