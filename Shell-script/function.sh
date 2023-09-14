@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash 
 
 echo -n "Enter Left-End: " 
 read le
@@ -22,7 +22,7 @@ is_prime(){
 }
 printf "Prime Numbers between %d and %d are: " "$le" "$ri"
 for((i=le;i<=ri;i++)){ 
-   is_prime $i 
+   is_prime $i
 } 
 printf "\n" 
 
