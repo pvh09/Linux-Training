@@ -8,7 +8,6 @@
 #include <stdbool.h>
 #include "file_handling.h"
 
-
 #define MAX_FILE_NAME 100
 
 /**

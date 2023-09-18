@@ -5,6 +5,7 @@ int main(){
     input_file(file_name);
 
     create_hard_link_function(file_name);
-
     create_soft_link_function(file_name);
+
+    return 0;
 }

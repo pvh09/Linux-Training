@@ -1,6 +1,6 @@
 #include "file_handling.h"
 
-const char* check_file_type(char file_type) 
+const char *check_file_type(char file_type)
 {
     switch (file_type)
     {
@@ -23,22 +23,24 @@ const char* check_file_type(char file_type)
     }
 }
 
-
-//enter input file and check name is validate
+// enter input file and check name is validate
 void input_file(char *file_name)
 {
     bool is_file_exist = false;
-    do {
+    do
+    {
         get_file_name(file_name);
         is_file_exist = check_file_exist(file_name);
     } while (!is_file_exist || strlen(file_name) > MAX_FILE_NAME);
 }
 
 // Function to format and display data from the directory listing
-void format_data_from_dir(const char *file_name) {
+void format_data_from_dir(const char *file_name)
+{
     FILE *file = fopen(file_name, "r");
 
-    if (file == NULL) {
+    if (file == NULL)
+    {
         perror("Error opening the file");
         return;
     }
@@ -51,21 +53,25 @@ void format_data_from_dir(const char *file_name) {
     printf("----------------------------------------------\n");
 
     // Read and process each line in the file
-    while (fgets(line, sizeof(line), file)) {
+    while (fgets(line, sizeof(line), file))
+    {
         line_count++;
 
         // Skip the first line (header) and lines containing "main"
-        if (line_count == 1 || strstr(line, "main") != NULL) {
+        if (line_count == 1 || strstr(line, "main") != NULL)
+        {
             continue;
         }
 
         char file_type = line[0];
         char *file_name = strrchr(line, ' ');
 
-        if (file_name != NULL) {
+        if (file_name != NULL)
+        {
             file_name++;
             char *newline = strchr(file_name, '\n');
-            if (newline != NULL) {
+            if (newline != NULL)
+            {
                 *newline = '\0';
             }
 
@@ -77,15 +83,16 @@ void format_data_from_dir(const char *file_name) {
     fclose(file);
 }
 
-void get_sub_file(const char* file_name) {
+void get_sub_file(const char *file_name)
+{
     char command[MAX_FILE_NAME];
     char *temp_file = "temp_file.txt";
     snprintf(command, sizeof(command), "ls -l \"%s\" > %s", file_name, temp_file);
     int result = system(command);
-    if (result != 0) {
+    if (result != 0)
+    {
         perror("Error executing command");
     }
     format_data_from_dir(temp_file);
     system("rm -rf *.txt");
 }
-

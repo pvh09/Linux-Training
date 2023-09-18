@@ -29,8 +29,9 @@ bool is_exist_input_file(char *file_name)
     return true;
 }
 
-//check file exist in folder
-bool check_file_exist(char* file_name){
+// check file exist in folder
+bool check_file_exist(char *file_name)
+{
     bool check;
     check = is_exist_input_file(file_name);
     return check;
@@ -44,6 +45,3 @@ void get_file_name(char *file_name)
     fgets(file_name, MAX_FILE_NAME, stdin);
     file_name[strcspn(file_name, "\n")] = '\0';
 }
-
-
-
