@@ -45,7 +45,7 @@ bool check_file_exist(char* file_name);
  * @return True if the file name is invalid; otherwise, false.
  */
 
-void get_file_name(char* file_name, bool flag_check_input_output);
+void get_file_name(char* file_name);
 
 /**
  * @brief Input data from a file.

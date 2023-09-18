@@ -36,15 +36,11 @@ bool check_file_exist(char* file_name){
     return check;
 }
 
-//enter name of file
-void get_file_name(char* file_name, bool flag_check_input_output){
+// enter name of file
+void get_file_name(char *file_name)
+{
     __fpurge(stdin);
-    if(flag_check_input_output){
-        printf("Enter your input file name: ");
-    }
-    else{
-        printf("Enter your output file name: ");
-    }
+    printf("Enter your input file name: ");
     fgets(file_name, MAX_FILE_NAME, stdin);
     file_name[strcspn(file_name, "\n")] = '\0';
 }
