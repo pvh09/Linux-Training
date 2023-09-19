@@ -3,7 +3,6 @@
 # Take input from the user
 echo -n "Enter a number"
 read n
-
 # Calculate remainder using mod (%) operator
 remainder=$(( $n % 2 ))
 

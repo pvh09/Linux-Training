@@ -61,18 +61,19 @@ else
     echo "same"
 fi
 
-# -n
-if [ -n "check" ];
-then
-    echo "not null" #output
+#!/bin/bash
+
+str1=""
+if [ -n "$str1" ]; then
+    echo "string not empty: '$str1'"
 else
-    echo "null"
+    echo "empty"
 fi
 
-# -z
-if [ -z "check" ];
-then
-    echo "null"
+str2=""
+if [ -z "$str2" ]; then
+    echo "string not empty: '$str2'"
 else
-    echo "not null" #output
+    echo "empty"
 fi
+

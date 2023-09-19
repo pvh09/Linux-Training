@@ -1,0 +1,8 @@
+total 104
+-rwxrwxr-x 1 pvh pvh 348 Sep 18 17:33 argument_p1.sh
+-rwxrwxr-x 1 pvh pvh 678 Sep 18 17:38 argument_p2.sh
+-rwxrwxr-x 1 pvh pvh 196 Sep 13 12:01 arithmetic.sh
+-rw-rw-r-- 1 pvh pvh  35 Sep 18 17:42 ar_text1.txt
+-rw-rw-r-- 1 pvh pvh  35 Sep 18 17:42 ar_text2.txt
+-rw-rw-r-- 1 pvh pvh   0 Sep 19 08:55 awk_data1.txt
+
