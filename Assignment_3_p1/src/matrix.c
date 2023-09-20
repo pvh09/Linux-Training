@@ -4,8 +4,10 @@
 Function name: free_matrix
 Description: release memory
 ===================================================================*/
-void free_matrix(matrix_t *matrix) {
-    for (int i = 0; i < matrix->row; i++) {
+void free_matrix(matrix_t *matrix)
+{
+    for (int i = 0; i < matrix->row; i++)
+    {
         free(matrix->data[i]);
     }
     free(matrix->data);
@@ -39,7 +41,8 @@ static bool check_row_col_matrix(int row_matrix_a, int col_matrix_a, int row_mat
 ===================================================================*/
 matrix_t *init_matrix(int row, int col)
 {
-    matrix_t *p_matrix = (matrix_t *)malloc(sizeof(matrix_t));
+    matrix_t *p_matrix = NULL;
+    p_matrix = (matrix_t *)malloc(sizeof(matrix_t));
     p_matrix->row = row;
     p_matrix->col = col;
 
@@ -76,7 +79,7 @@ void create_data_matrix(matrix_t *matrix)
         for (j = 0; j < matrix->col; j++)
         {
             printf("Enter matrix[%d][%d]: ", i, j);
-            matrix->data[i][j] = rand();//validate_num_input(0);
+            matrix->data[i][j] = rand() % 10; // validate_num_input(0);
         }
     }
 }
@@ -107,12 +110,13 @@ matrix_t *calculate_product_matrix(matrix_t *p_matrix_a, matrix_t *p_matrix_b)
 {
     int i = 0;
     int j = 0;
+    matrix_t *p_product_matrix = NULL;
     if (check_row_col_matrix(p_matrix_a->row, p_matrix_a->col, p_matrix_b->row, p_matrix_b->col, 0))
     {
         return NULL;
     }
 
-    matrix_t *p_product_matrix = init_matrix(p_matrix_a->row, p_matrix_b->col);
+    p_product_matrix = init_matrix(p_matrix_a->row, p_matrix_b->col);
     for (i = 0; i < p_matrix_a->row; i++)
     {
         for (j = 0; j < p_matrix_b->col; j++)
@@ -127,46 +131,73 @@ matrix_t *calculate_product_matrix(matrix_t *p_matrix_a, matrix_t *p_matrix_b)
     return p_product_matrix;
 }
 
-
-void *matrix_multiply(void *arg) {
+void *multiply_rows(void *arg)
+{
     thread_data_t *data = (thread_data_t *)arg;
-    for (int i = data->start_row; i < data->end_row; i++) {
-        for (int j = 0; j < data->matrix_b->col; j++) {
-            data->result->data[i][j] = 0;
-            for (int k = 0; k < data->matrix_a->col; k++) {
-                data->result->data[i][j] += data->matrix_a->data[i][k] * data->matrix_b->data[k][j];
+    matrix_t *matrix_a = data->matrix_a;
+    matrix_t *matrix_b = data->matrix_b;
+    matrix_t *result_matrix = data->result;
+    int start_row = data->start_row;
+    int end_row = data->end_row;
+
+    for (int i = start_row; i < end_row; i++)
+    {
+        for (int j = 0; j < matrix_b->col; j++)
+        {
+            double sum = 0;
+            for (int k = 0; k < matrix_a->col; k++)
+            {
+                sum += matrix_a->data[i][k] * matrix_b->data[k][j];
             }
+            result_matrix->data[i][j] = sum;
         }
     }
+
     pthread_exit(NULL);
 }
 
-matrix_t *calculate_product_matrix_multi(matrix_t *matrix_a, matrix_t *matrix_b, int num_threads) {
-
-    matrix_t *result = init_matrix(matrix_a->row, matrix_b->col);
-
+matrix_t *calculate_product_matrix_multi(matrix_t *matrix_a, matrix_t *matrix_b, int num_threads)
+{
+    matrix_t *result_matrix = NULL;
     pthread_t threads[num_threads];
+    int rows_per_thread = 0;
+    int remaining_rows = 0;
+    int start_row = 0;
+
     thread_data_t thread_data[num_threads];
 
-    int rows_per_thread = matrix_a->row / num_threads;
-    int remaining_rows = matrix_a->row % num_threads;
-
-    int start_row = 0;
-    for (int i = 0; i < num_threads; i++) {
-        thread_data[i].start_row = start_row;
-        thread_data[i].end_row = start_row + rows_per_thread + (i < remaining_rows ? 1 : 0);
-        thread_data[i].matrix_a = matrix_a;
-        thread_data[i].matrix_b = matrix_b;
-        thread_data[i].result = result;
-
-        pthread_create(&threads[i], NULL, matrix_multiply, &thread_data[i]);
-
-        start_row = thread_data[i].end_row;
+    if (matrix_a->col != matrix_b->row)
+    {
+        return NULL;
     }
 
-    for (int i = 0; i < num_threads; i++) {
+    result_matrix = init_matrix(matrix_a->row, matrix_b->col);
+    rows_per_thread = matrix_a->row / num_threads;
+    remaining_rows = matrix_a->row % num_threads;
+    
+    for (int i = 0; i < num_threads; i++)
+    {
+        int end_row = start_row + rows_per_thread;
+        if (i == num_threads - 1)
+        {
+            end_row += remaining_rows;
+        }
+
+        thread_data[i].matrix_a = matrix_a;
+        thread_data[i].matrix_b = matrix_b;
+        thread_data[i].result = result_matrix;
+        thread_data[i].start_row = start_row;
+        thread_data[i].end_row = end_row;
+
+        pthread_create(&threads[i], NULL, multiply_rows, &thread_data[i]);
+
+        start_row = end_row;
+    }
+
+    for (int i = 0; i < num_threads; i++)
+    {
         pthread_join(threads[i], NULL);
     }
 
-    return result;
+    return result_matrix;
 }
