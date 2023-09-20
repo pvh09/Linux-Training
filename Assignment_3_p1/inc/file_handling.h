@@ -8,6 +8,8 @@
 #include <limits.h>
 #include <stdio_ext.h>
 #include <pthread.h>
+#include <time.h>
+#include <unistd.h>
 
 double validate_num_input(bool flag_check_data);
 
