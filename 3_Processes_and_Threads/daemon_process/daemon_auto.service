@@ -1,0 +1,11 @@
+[Unit]
+Description=My Daemon Service
+After=network.target
+
+[Service]
+ExecStart=/home/pvh/Working_space/Linux-Training/3_Processes_and_Threads/daemon_process/daemon
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
