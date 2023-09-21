@@ -1,0 +1,14 @@
+Run the following command to notify systemd about creating a new service:
+sudo systemctl daemon-reload
+
+Start the service:
+sudo systemctl start daemon_auto
+
+Stop the service:
+sudo systemctl stop daemon_auto
+
+Enable the service to start automatically when the operating system boots:
+sudo systemctl enable mydaemon
+
+Check the status of the service:
+sudo systemctl status daemon_auto
