@@ -13,7 +13,6 @@ void sig_handler1(int signum)
 
 int main()
 {
-    // time_t start, finish
     sigset_t new_set, old_set;
     if (signal(SIGINT, sig_handler1) == SIG_ERR)
     {
@@ -24,20 +23,22 @@ int main()
     sigemptyset(&new_set);
     sigemptyset(&old_set);
 
-    //sigaddset(&new_set, SIGINT);
-    // sigaddset(&new_set, SIGCHLD);
+    sigaddset(&new_set, SIGINT);
+    //sigaddset(&new_set, SIGCHLD);
 
-     printf("Checking signal set:\n");
+    printf("Checking signal set:\n");
 
-    // for (int i = 1; i < SIGRTMAX + 1; i++) {
-    //     if (sigismember(&new_set, i)) {
-    //         printf("Signal %d is in the set.\n", i);
-    //     }
-    // }
+    for (int i = 1; i < SIGRTMAX + 1; i++)
+    {
+        if (sigismember(&new_set, i))
+        {
+            printf("Signal %d is in the set.\n", i);
+        }
+    }
 
     if (sigprocmask(SIG_SETMASK, &new_set, &old_set) == 0)
     {
-        // sigprocmask(SIG_SETMASK, NULL, &old_set)
+        sigprocmask(SIG_SETMASK, NULL, &old_set);
         if (sigismember(&new_set, SIGINT) == 1)
         {
             printf("SIGINT is exist!\n");
@@ -50,5 +51,4 @@ int main()
     while (1);
 
     return 0;
-    
 }

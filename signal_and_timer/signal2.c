@@ -6,7 +6,7 @@
 void sig_handler1(int num){
     printf("\n Im signal handler 1: %d\n", num);
     //while(1);
-    //exit(EXIT_SUCCESS);
+    exit(EXIT_SUCCESS);
 }
 
 void sig_handler2(int num){
@@ -25,16 +25,16 @@ int main()
         exit(EXIT_FAILURE);
     }
 
-    // signal(SIGKILL, sig_handler2);
+    //signal(SIGKILL, sig_handler2);
     // signal(SIGTERM, sig_handler3);
-    // sleep(4);
-    // kill(getpid(), SIGINT);
+     sleep(4);
+     kill(getpid(), SIGINT);
 
-    printf("\n The procress_id: %d\n", getpid());
-    while (1)
-    {
-        printf("Hello\n");
-        sleep(2);
-    }
+    // printf("\n The procress_id: %d\n", getpid());
+    // while (1)
+    // {
+    //     printf("Hello\n");
+    //     sleep(2);
+    // }
     
 }
