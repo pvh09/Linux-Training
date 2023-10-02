@@ -8,6 +8,8 @@
 #include <stdlib.h> 
 
 #define MAX_FILE_NAME 20
+#define MAX_VALUE 10
+#define MAX_THREADS 3
 
 void init_semaphore();
 

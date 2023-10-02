@@ -9,20 +9,22 @@ void init_semaphore()
 {
     // Initialize semaphores
     sem_init(&g_sem1, 0, 1);
-    sem_init(&g_sem2, 0, 1); // Both semaphores initially available
+    sem_init(&g_sem2, 0, 1);
 
     // Create three threads
-    pthread_t thread1, thread2, thread3;
+    pthread_t thread[MAX_THREADS];
     int thread_ids[] = {1, 2, 3};
 
-    pthread_create(&thread1, NULL, thread_tunction, &thread_ids[0]);
-    pthread_create(&thread2, NULL, thread_tunction, &thread_ids[1]);
-    pthread_create(&thread3, NULL, thread_tunction, &thread_ids[2]);
-
+    for (size_t i = 0; i < MAX_THREADS; i++)
+    {
+        pthread_create(&thread[i], NULL, thread_tunction, &thread_ids[i]);
+    }
+    
     // Wait for threads to finish
-    pthread_join(thread1, NULL);
-    pthread_join(thread2, NULL);
-    pthread_join(thread3, NULL);
+    for (size_t i = 0; i < MAX_THREADS; i++)
+    {
+        pthread_join(thread[i], NULL);
+    }
 
     // Destroy semaphores
     sem_destroy(&g_sem1);
@@ -37,7 +39,7 @@ void *thread_tunction(void *arg)
     char file_name[MAX_FILE_NAME];
     FILE *file;
 
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < MAX_VALUE; i++)
     {
         int random_file = rand() % 2 + 1;
         sprintf(file_name, "output%d.txt", random_file);
