@@ -19,7 +19,7 @@ void init_semaphore()
     {
         pthread_create(&thread[i], NULL, thread_tunction, &thread_ids[i]);
     }
-    
+
     // Wait for threads to finish
     for (size_t i = 0; i < MAX_THREADS; i++)
     {
