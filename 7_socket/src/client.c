@@ -28,7 +28,7 @@ int main()
         exit(1);
     }
 
-    //printf("Connected to server at %d:%d\n", INADDR_ANY, PORT);
+    // printf("Connected to server at %d:%d\n", INADDR_ANY, PORT);
     while (1)
     {
         // Send data to the server

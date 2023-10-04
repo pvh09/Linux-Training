@@ -43,6 +43,7 @@ void *handle_client(void *arg)
         else if (bytes_read == 0)
         {
             printf(">> Client is closed\n");
+            client_count--;
             break;
         }
         else
@@ -73,7 +74,7 @@ void create_socket(int *server_socket, struct sockaddr_in *server_addr)
     server_addr->sin_port = htons(PORT);
 }
 
-//Assign address for socket
+// Assign address for socket
 void bind_socket(int *bind_socket, int *server_socket, struct sockaddr_in server_addr)
 {
     *bind_socket = bind(*server_socket, (struct sockaddr *)&server_addr, sizeof(server_addr));
@@ -98,7 +99,7 @@ void listen_socket(int *listen_socket, int *server_socket)
     printf("Server listening on port: %d...\n", PORT);
 }
 
-//handling acception connection socket
+// handling acception connection socket
 void accept_connection(int *client_sockets, int *server_socket, struct sockaddr_in *client_addr, socklen_t *addr_size)
 {
     // Accept a new client connection
@@ -130,7 +131,7 @@ int main()
     {
         // Accept a new client connection
         accept_connection(client_sockets, &server_socket, &client_addr, &addr_size);
-        
+
         // Create a new thread to handle the client
         pthread_t thread;
         if (pthread_create(&thread, NULL, handle_client, &client_sockets[client_count]) != 0)
