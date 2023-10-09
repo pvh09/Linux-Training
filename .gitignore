@@ -7,3 +7,5 @@ makefile
 test.c
 .vscode/tasks.json
 output.txt
+speedtest
+speedtest.c
