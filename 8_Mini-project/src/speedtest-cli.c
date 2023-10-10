@@ -9,6 +9,10 @@
 #include <signal.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#include <openssl/x509.h>
+#include <openssl/evp.h>
 
 #define SPEEDTEST_DOMAIN_NAME "www.speedtest.net"
 #define CONFIG_REQUEST_URL "speedtest-config.php"
@@ -17,9 +21,9 @@
 #define SERVERS_LOCATION_REQUEST_URL "speedtest-servers-static.php?"
 
 #define FILE_DIRECTORY_PATH "/tmp/"
-#define NEAREST_SERVERS_NUM 5
+#define NEAREST_SERVERS_NUM 3
 #define THREAD_NUMBER 4
-#define SPEEDTEST_DURATION 15
+#define SPEEDTEST_DURATION 5
 
 #define UL_BUFFER_SIZE 8192
 #define UL_BUFFER_TIMES 10240
@@ -109,7 +113,7 @@ int get_ipv4_https_addr(char *domain_name, struct sockaddr_in *servinfo)
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
-    
+
     printf("domain: %s\n", domain_name);
     char *token = strtok(domain_name, ":");
 
@@ -136,67 +140,6 @@ int get_ipv4_https_addr(char *domain_name, struct sockaddr_in *servinfo)
         return 0;
     }
 
-    return 1;
-}
-
-int get_https_file(struct sockaddr_in *serv, char *domain_name, char *request_url, char *filename) {
-    SSL_CTX *ctx;
-    SSL *ssl;
-    int sockfd, len;
-    char buf[1024];
-
-    // Initialize OpenSSL
-    SSL_library_init();
-    OpenSSL_add_all_algorithms();
-    SSL_load_error_strings();
-    
-    // Create an SSL context
-    ctx = SSL_CTX_new(SSLv23_client_method());
-    if (ctx == NULL) {
-        ERR_print_errors_fp(stderr);
-        return 0;
-    }
-
-    // Create an SSL connection
-    ssl = SSL_new(ctx);
-    if (ssl == NULL) {
-        ERR_print_errors_fp(stderr);
-        return 0;
-    }
-
-    // Connect the SSL object with the socket
-    sockfd = serv->sin_family;
-    SSL_set_fd(ssl, sockfd);
-
-    // Perform the SSL handshake
-    if (SSL_connect(ssl) == -1) {
-        ERR_print_errors_fp(stderr);
-        return 0;
-    }
-
-    // Send an HTTP GET request
-    char request[1024];
-    snprintf(request, sizeof(request), "GET %s HTTP/1.0\r\nHost: %s\r\n\r\n", request_url, domain_name);
-    SSL_write(ssl, request, strlen(request));
-
-    // Open the output file for writing
-    FILE *output_file = fopen(filename, "wb");
-    if (!output_file) {
-        perror("Failed to open output file for writing");
-        return 0;
-    }
-
-    // Receive and save the response
-    while ((len = SSL_read(ssl, buf, sizeof(buf))) > 0) {
-        fwrite(buf, 1, len, output_file);
-    }
-
-    // Clean up and close resources
-    SSL_free(ssl);
-    SSL_CTX_free(ctx);
-    fclose(output_file);
-    
-    printf("Downloaded %s\n", filename);
     return 1;
 }
 
@@ -276,6 +219,122 @@ int get_http_file(struct sockaddr_in *serv, char *domain_name, char *request_url
     fclose(fp);
     return 1;
 }
+
+int get_https_file(struct sockaddr_in *serv, char *domain_name, char *request_url, char *filename)
+{
+    int fd;
+    char sbuf[256] = {0}, tmp_path[128] = {0};
+    char rbuf[8192];
+    struct timeval tv;
+    fd_set fdSet;
+    FILE *fp = NULL;
+
+    SSL_CTX *ctx;
+    SSL *ssl;
+
+    SSL_library_init();
+    ctx = SSL_CTX_new(TLS_client_method());
+    if (!ctx)
+    {
+        perror("SSL_CTX_new error!\n");
+        return 0;
+    }
+
+    if ((fd = socket(serv->sin_family, SOCK_STREAM, 0)) == -1)
+    {
+        perror("Open socket error!\n");
+        if (fd)
+            close(fd);
+        return 0;
+    }
+
+    if (connect(fd, (struct sockaddr *)serv, sizeof(struct sockaddr)) == -1)
+    {
+        perror("Socket connect error!\n");
+        if (fd)
+            close(fd);
+        return 0;
+    }
+
+    ssl = SSL_new(ctx);
+    SSL_set_fd(ssl, fd);
+    if (SSL_connect(ssl) == -1)
+    {
+        perror("SSL_connect error!\n");
+        SSL_free(ssl);
+        SSL_CTX_free(ctx);
+        close(fd);
+        return 0;
+    }
+
+    sprintf(sbuf,
+            "GET /%s HTTP/1.1\r\n"
+            "Host: %s\r\n"
+            "User-Agent: status\r\n"
+            "Accept: */*\r\n"
+            "Connection: close\r\n\r\n",
+            request_url, domain_name);
+
+    if (SSL_write(ssl, sbuf, strlen(sbuf)) != strlen(sbuf))
+    {
+        perror("Can't send data to server\n");
+        SSL_free(ssl);
+        SSL_CTX_free(ctx);
+        close(fd);
+        return 0;
+    }
+
+    sprintf(tmp_path, "%s%s", FILE_DIRECTORY_PATH, filename);
+    fp = fopen(tmp_path, "w+");
+
+    while (1)
+    {
+        char *ptr = NULL;
+        memset(rbuf, 0, sizeof(rbuf));
+        FD_ZERO(&fdSet);
+        FD_SET(fd, &fdSet);
+
+        tv.tv_sec = 3;
+        tv.tv_usec = 0;
+        int status = select(fd + 1, &fdSet, NULL, NULL, &tv);
+        int i = SSL_read(ssl, rbuf, sizeof(rbuf));
+        if (status > 0 && FD_ISSET(fd, &fdSet))
+        {
+            if (i < 0)
+            {
+                printf("Can't get https file!\n");
+                SSL_free(ssl);
+                SSL_CTX_free(ctx);
+                close(fd);
+                fclose(fp);
+                return 0;
+            }
+            else if (i == 0)
+            {
+                break;
+            }
+            else
+            {
+                if ((ptr = strstr(rbuf, "\r\n\r\n")) != NULL)
+                {
+                    ptr += 4;
+                    fwrite(ptr, 1, strlen(ptr), fp);
+                }
+                else
+                {
+                    fwrite(rbuf, 1, i, fp);
+                }
+            }
+        }
+    }
+
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    close(fd);
+    fclose(fp);
+    return 1;
+}
+
 
 int get_ip_address_position(char *fileName, client_data_t *client_data)
 {
@@ -531,7 +590,7 @@ void *calculate_ul_speed_thread()
             duration = stop_ul_time - start_ul_time;
             // ul_speed = (double)total_ul_size/1024/1024/duration*8;
             ul_speed = (double)total_ul_size / 1000 / 1000 / duration * 8;
-            if (duration)
+            if (duration >0)
             {
                 if (!disable_real_time_reporting)
                 {
@@ -829,46 +888,30 @@ int speedtest_upload(server_data_t *nearest_server)
     return 1;
 }
 
+void print_nearest_servers_table(server_data_t *nearest_servers)
+{
+    printf("=========================================================\n");
+    for (int i = 0; i < NEAREST_SERVERS_NUM; i++)
+    {
+        printf("%-70s %-15.2f %-15.2f %-15s %-15s %-15.2f %-15i\n", nearest_servers[i].url, 
+                                                                    nearest_servers[i].latitude, 
+                                                                    nearest_servers[i].longitude, 
+                                                                    nearest_servers[i].name,
+                                                                    nearest_servers[i].country, 
+                                                                    nearest_servers[i].distance, 
+                                                                    nearest_servers[i].latency);
+    }
+    printf("=========================================================\n");
+}
+
 int main(int argc, char **argv)
 {
-    int i, best_server_index, opt;
+    int i, best_server_index;
     client_data_t client_data;
     server_data_t nearest_servers[NEAREST_SERVERS_NUM];
     pthread_t pid;
     struct sockaddr_in servinfo;
     struct itimerval timerVal;
-
-    // while ((opt = getopt(argc, argv, "dush")) != -1)
-    // {
-    //     // printf("options: %c\n", opt);
-    //     switch (opt)
-    //     {
-    //     case 's':
-    //         disable_real_time_reporting = 1;
-    //         break;
-    //     case 'd':
-    //         compute_dl_speed = 1;
-    //         compute_ul_speed = 0;
-    //         break;
-    //     case 'u':
-    //         compute_dl_speed = 0;
-    //         compute_ul_speed = 1;
-    //         break;
-    //     case 'h':
-    //         printf("Usage: speedtest-cli [OPTIONS]\n\n"
-    //                "OPTIONS:\n"
-    //                "\t-s\tDisable real time reporting of download/upload speed. Print only the final result.\n"
-    //                "\t-d\tCompute download speed only.\n"
-    //                "\t-u\tCompute upload speed only.\n"
-    //                "\t-h\tPrint this help.\n\n");
-    //         return 0;
-    //     case '?':
-    //         fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
-    //         return 1;
-    //     default:
-    //         break;
-    //     }
-    // }
 
     memset(&client_data, 0, sizeof(client_data_t));
     for (i = 0; i < NEAREST_SERVERS_NUM; i++)
@@ -921,11 +964,12 @@ int main(int argc, char **argv)
         timerVal.it_value.tv_sec = SPEEDTEST_DURATION;
         timerVal.it_value.tv_usec = 0;
 
+        print_nearest_servers_table(nearest_servers);
         //if (compute_dl_speed)
         //{
             setitimer(ITIMER_REAL, &timerVal, NULL);
             pthread_create(&pid, NULL, calculate_dl_speed_thread, NULL);
-            speedtest_download(&nearest_servers[best_server_index]);
+            speedtest_download(&nearest_servers[1]);
             sleep(1);
             printf("\n");
         //}
@@ -935,10 +979,10 @@ int main(int argc, char **argv)
             thread_all_stop = 0;
             setitimer(ITIMER_REAL, &timerVal, NULL);
             pthread_create(&pid, NULL, calculate_ul_speed_thread, NULL);
-            speedtest_upload(&nearest_servers[best_server_index]);
+            speedtest_upload(&nearest_servers[1]);
             sleep(1);
             printf("\n");
         //}
-    //}
+    }
     return 0;
 }
