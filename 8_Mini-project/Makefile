@@ -1,38 +1,24 @@
-include $(TOPDIR)/rules.mk
+CC = gcc
+INC = -I./inc
+SRC = ./src/*.c
 
-PKG_NAME:=speedtest-cli
-PKG_VERSION:=1.0
-PKG_RELEASE:=2
+all: run clean
 
-PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
+run: main
+	./main
 
+main: main.c $(SRC)
+	$(CC) $(INC) main.c $(SRC) -o main -lm -lpthread -lssl -lcrypto
 
-include $(INCLUDE_DIR)/package.mk
+debug_memory: main.c $(SRC)
+	$(CC) $(INC) main.c $(SRC) -std=c11 -lm -o debug
+	valgrind --track-origins=yes --leak-check=full ./debug
+	rm -rf debug
 
-define Package/speedtest-cli
-	SECTION:=net
-	CATEGORY:=Network
-	TITLE:=speedtest client
-	DEPENDS:=+libpthread
-endef
+debug_gdb: main.c $(SRC)
+	$(CC) $(INC) main.c $(SRC) -o gdb_debug -g
+	gdb ./gdb_debug
+	rm -rf gdb_debug
 
-define Package/speedtest-cli/description
-	speedtest-cli is the client tool (written in C) to measure upload and download throughput 
-	of a computer against nearest speedtest.net public server.
-endef
-
-TARGET_CFLAGS += -ggdb3
-
-define Build/Prepare
-	mkdir -p $(PKG_BUILD_DIR)
-	$(CP) ./src/* $(PKG_BUILD_DIR)/
-endef
-
-
-define Package/speedtest-cli/install
-	$(INSTALL_DIR) $(1)/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/speedtest-cli $(1)/bin/
-endef
-
-
-$(eval $(call BuildPackage,speedtest-cli))
+clean:
+	rm -rf main

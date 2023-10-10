@@ -1,72 +1,12 @@
-#include <stdio.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <stdlib.h>
-#include <netdb.h>
-#include <string.h>
-#include <math.h>
-#include <pthread.h>
-#include <signal.h>
-#include <sys/time.h>
-#include <unistd.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#include <openssl/x509.h>
-#include <openssl/evp.h>
-
-#define SPEEDTEST_DOMAIN_NAME "www.speedtest.net"
-#define CONFIG_REQUEST_URL "speedtest-config.php"
-
-#define SPEEDTEST_SERVERS_DOMAIN_NAME "c.speedtest.net"
-#define SERVERS_LOCATION_REQUEST_URL "speedtest-servers-static.php?"
-
-#define FILE_DIRECTORY_PATH "/tmp/"
-#define NEAREST_SERVERS_NUM 3
-#define THREAD_NUMBER 4
-#define SPEEDTEST_DURATION 5
-
-#define UL_BUFFER_SIZE 8192
-#define UL_BUFFER_TIMES 10240
-#define DL_BUFFER_SIZE 8192
+#include "speedtest-cli.h"
 
 float start_dl_time, stop_dl_time, start_ul_time, stop_ul_time;
-int thread_all_stop = 0, disable_real_time_reporting = 0, compute_dl_speed = 1, compute_ul_speed = 1;
+int thread_all_stop = 0;
+int disable_real_time_reporting = 0, compute_dl_speed = 1, compute_ul_speed = 1;
 long int total_dl_size = 0, total_ul_size = 0;
 
 static pthread_mutex_t pthread_mutex = PTHREAD_MUTEX_INITIALIZER;
-char sbuf[256];
 
-typedef struct client_data
-{
-    char ipAddr[128];
-    double latitude;
-    double longitude;
-    char isp[128];
-} client_data_t;
-
-typedef struct server_data
-{
-    char url[128];
-    double latitude;
-    double longitude;
-    char name[128];
-    char country[128];
-    double distance;
-    int latency;
-    char domain_name[128];
-    struct sockaddr_in servinfo;
-} server_data_t;
-
-typedef struct thread
-{
-    int thread_index;
-    int running;
-    pthread_t tid;
-    char domain_name[128];
-    char request_url[128];
-
-    struct sockaddr_in servinfo;
-} thread_t;
 
 thread_t thread[THREAD_NUMBER];
 
@@ -649,24 +589,24 @@ void *calculate_dl_speed_thread()
     return NULL;
 }
 
-void *download_thread(void *arg)
-{
+void *download_thread(void *arg) {
+    struct timeval start_time, end_time;
+    size_t total_bytes_received = 0;
+    double elapsed_time = 0.0;
+
     thread_t *t_arg = arg;
     int i = t_arg->thread_index;
 
     int fd;
     char sbuf[256] = {0}, rbuf[DL_BUFFER_SIZE];
-    struct timeval tv;
     fd_set fdSet;
 
-    if ((fd = socket(thread[i].servinfo.sin_family, SOCK_STREAM, 0)) == -1)
-    {
+    if ((fd = socket(thread[i].servinfo.sin_family, SOCK_STREAM, 0)) == -1) {
         perror("Open socket error!\n");
         goto err;
     }
 
-    if (connect(fd, (struct sockaddr *)&thread[i].servinfo, sizeof(struct sockaddr)) == -1)
-    {
+    if (connect(fd, (struct sockaddr *)&thread[i].servinfo, sizeof(struct sockaddr)) == -1) {
         perror("Socket connect error!\n");
         goto err;
     }
@@ -678,51 +618,58 @@ void *download_thread(void *arg)
             "Accept: */*\r\n\r\n",
             thread[i].request_url, thread[i].domain_name);
 
-    if (send(fd, sbuf, strlen(sbuf), 0) != strlen(sbuf))
-    {
+    if (send(fd, sbuf, strlen(sbuf), 0) != strlen(sbuf)) {
         perror("Can't send data to server\n");
         goto err;
     }
 
-    while (1)
-    {
+    gettimeofday(&start_time, NULL); // Record start time
+
+    while (1) {
         FD_ZERO(&fdSet);
         FD_SET(fd, &fdSet);
 
-        tv.tv_sec = 3;
-        tv.tv_usec = 0;
-        int status = select(fd + 1, &fdSet, NULL, NULL, &tv);
+        struct timeval timeout = {3, 0}; // Set a timeout of 3 seconds
+
+        int status = select(fd + 1, &fdSet, NULL, NULL, &timeout);
 
         int recv_byte = recv(fd, rbuf, sizeof(rbuf), 0);
-        if (status > 0 && FD_ISSET(fd, &fdSet))
-        {
-            if (recv_byte < 0)
-            {
+        if (status > 0 && FD_ISSET(fd, &fdSet)) {
+            if (recv_byte < 0) {
                 printf("Can't receive data!\n");
                 break;
-            }
-            else if (recv_byte == 0)
-            {
+            } else if (recv_byte == 0) {
                 break;
-            }
-            else
-            {
+            } else {
                 pthread_mutex_lock(&pthread_mutex);
                 total_dl_size += recv_byte;
                 pthread_mutex_unlock(&pthread_mutex);
             }
 
-            if (thread_all_stop)
+            if (thread_all_stop) {
                 break;
+            }
+        }
+
+        gettimeofday(&end_time, NULL); // Record end time
+        elapsed_time = (double)(end_time.tv_sec - start_time.tv_sec) +
+                       (double)(end_time.tv_usec - start_time.tv_usec) / 1000000.0;
+
+        if (elapsed_time > 0.0) {
+            double download_speed_bps = (double)total_dl_size / elapsed_time;
+            // Convert to desired units (Kbps, Mbps, etc.)
+            // Display or store download_speed_bps
         }
     }
 
 err:
-    if (fd)
+    if (fd) {
         close(fd);
+    }
     thread[i].running = 0;
     return NULL;
 }
+
 
 int speedtest_download(server_data_t *nearest_server)
 {
@@ -902,87 +849,4 @@ void print_nearest_servers_table(server_data_t *nearest_servers)
                                                                     nearest_servers[i].latency);
     }
     printf("=========================================================\n");
-}
-
-int main(int argc, char **argv)
-{
-    int i, best_server_index;
-    client_data_t client_data;
-    server_data_t nearest_servers[NEAREST_SERVERS_NUM];
-    pthread_t pid;
-    struct sockaddr_in servinfo;
-    struct itimerval timerVal;
-
-    memset(&client_data, 0, sizeof(client_data_t));
-    for (i = 0; i < NEAREST_SERVERS_NUM; i++)
-    {
-        memset(&nearest_servers[i], 0, sizeof(server_data_t));
-    }
-
-    if (get_ipv4_https_addr(SPEEDTEST_DOMAIN_NAME, &servinfo))
-    {
-        if (!get_https_file (&servinfo, SPEEDTEST_DOMAIN_NAME, CONFIG_REQUEST_URL, CONFIG_REQUEST_URL))
-        {
-            printf("Can't get your IP address information.\n");
-            return 0;
-        }
-    }
-    if (get_ipv4_https_addr(SPEEDTEST_SERVERS_DOMAIN_NAME, &servinfo))
-    {
-        if (!get_https_file(&servinfo, SPEEDTEST_SERVERS_DOMAIN_NAME, SERVERS_LOCATION_REQUEST_URL, SERVERS_LOCATION_REQUEST_URL))
-        {
-            printf("Can't get servers list.\n");
-            return 0;
-        }
-    }
-
-    get_ip_address_position(CONFIG_REQUEST_URL, &client_data);
-    printf("============================================\n");
-    printf("Your IP Address : %s\n", client_data.ipAddr);
-    printf("Your IP Location: %0.4lf, %0.4lf\n", client_data.latitude, client_data.longitude);
-    printf("Your ISP        : %s\n", client_data.isp);
-    printf("============================================\n");
-
-    if (get_nearest_server(client_data.latitude, client_data.longitude, nearest_servers) == 0)
-    {
-        printf("Can't get server list.\n");
-        return 0;
-    }
-    if ((best_server_index = get_best_server(nearest_servers)) != -1)
-    {
-        printf("==========The best server information==========\n");
-        printf("URL: %s\n", nearest_servers[best_server_index].url);
-        printf("Latitude: %lf, Longitude: %lf\n", nearest_servers[best_server_index].latitude, nearest_servers[best_server_index].longitude);
-        printf("Name: %s\n", nearest_servers[best_server_index].name);
-        printf("Country: %s\n", nearest_servers[best_server_index].country);
-        printf("Distance: %lf (km)\n", nearest_servers[best_server_index].distance);
-        printf("Latency: %d (us)\n", nearest_servers[best_server_index].latency);
-        printf("===============================================\n");
-
-        // Set speed test timer
-        signal(SIGALRM, stop_all_thread);
-        timerVal.it_value.tv_sec = SPEEDTEST_DURATION;
-        timerVal.it_value.tv_usec = 0;
-
-        print_nearest_servers_table(nearest_servers);
-        //if (compute_dl_speed)
-        //{
-            setitimer(ITIMER_REAL, &timerVal, NULL);
-            pthread_create(&pid, NULL, calculate_dl_speed_thread, NULL);
-            speedtest_download(&nearest_servers[1]);
-            sleep(1);
-            printf("\n");
-        //}
-
-        // if (compute_ul_speed)
-        // {
-            thread_all_stop = 0;
-            setitimer(ITIMER_REAL, &timerVal, NULL);
-            pthread_create(&pid, NULL, calculate_ul_speed_thread, NULL);
-            speedtest_upload(&nearest_servers[1]);
-            sleep(1);
-            printf("\n");
-        //}
-    }
-    return 0;
 }
