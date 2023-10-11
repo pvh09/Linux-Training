@@ -33,6 +33,8 @@
 #define UL_BUFFER_SIZE 8192
 #define UL_BUFFER_TIMES 10240
 #define DL_BUFFER_SIZE 8192
+#define PROTOCOL_HTTP 1
+#define PROTOCOL_HTTPS 2
 
 typedef struct client_data
 {
@@ -66,7 +68,10 @@ typedef struct thread
     struct sockaddr_in servinfo;
 } thread_t;
 
-#include "speedtest-download-upload.h"
+#include "speedtest-download.h"
+#include "speedtest-upload.h"
+
+float get_uptime(void);
 
 int get_ipv4_https_addr(char *domain_name, struct sockaddr_in *servinfo);
 
@@ -82,13 +87,6 @@ void print_nearest_servers_table(server_data_t *nearest_servers);
 
 void stop_all_thread(int signo);
 
-//void *calculate_dl_speed_thread();
-
-//int speedtest_download(server_data_t *nearest_server);
-
-//void *calculate_ul_speed_thread();
-
-//int speedtest_upload(server_data_t *nearest_server);
-
+void run_proc(int num_threads, int protocol);
 
 #endif
