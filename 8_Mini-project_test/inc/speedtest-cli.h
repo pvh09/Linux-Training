@@ -11,13 +11,13 @@
 #include <pthread.h>
 #include <signal.h>
 #include <sys/time.h>
-#include <stdlib.h>  // rand(), srand()
-#include <time.h>    // time()
 #include <unistd.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/x509.h>
 #include <openssl/evp.h>
+
+#include "speedtest-download.h"
 
 #define SPEEDTEST_DOMAIN_NAME "www.speedtest.net"
 #define CONFIG_REQUEST_URL "speedtest-config.php"
@@ -66,7 +66,6 @@ typedef struct thread
     struct sockaddr_in servinfo;
 } thread_t;
 
-#include "speedtest-download-upload.h"
 
 int get_ipv4_https_addr(char *domain_name, struct sockaddr_in *servinfo);
 
@@ -89,6 +88,5 @@ void stop_all_thread(int signo);
 //void *calculate_ul_speed_thread();
 
 //int speedtest_upload(server_data_t *nearest_server);
-
 
 #endif

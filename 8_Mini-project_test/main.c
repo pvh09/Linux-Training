@@ -64,7 +64,6 @@ int main(int argc, char **argv)
         setitimer(ITIMER_REAL, &timerVal, NULL);
         pthread_create(&pid, NULL, calculate_dl_speed_thread, NULL);
         speedtest_download(&nearest_servers[1]);
-        
         sleep(1);
         printf("\n");
 
