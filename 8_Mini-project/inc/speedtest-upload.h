@@ -1,6 +1,6 @@
 #ifndef _SPEED_UPLOAD_H_
 #define _SPEED_UPLOAD_H_
-#include "speedtest-cli.h"
+#include "speedtest-download.h"
 
 void *calculate_ul_speed_thread();
 void *upload_thread(void *arg);

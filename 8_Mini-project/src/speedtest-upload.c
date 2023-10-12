@@ -3,8 +3,7 @@
 extern float start_dl_time, stop_dl_time, start_ul_time, stop_ul_time;
 extern long int total_dl_size, total_ul_size;
 extern int disable_real_time_reporting, compute_dl_speed, thread_all_stop;
-extern thread_t thread[THREAD_NUMBER];
-extern pthread_mutex_t pthread_mutex; 
+extern pthread_mutex_t pthread_mutex;
 
 void *calculate_ul_speed_thread()
 {
@@ -135,13 +134,23 @@ err:
 
 int speedtest_upload(server_data_t *nearest_server)
 {
+    clock_t start = 0;
+    clock_t end = 0;
+    double time_used = 0;
     int i;
     char dummy[128] = {0}, request_url[128] = {0};
     sscanf(nearest_server->url, "http://%[^/]/%s", dummy, request_url);
 
     start_ul_time = get_uptime();
+    start = clock();
     while (1)
     {
+        end = clock();
+        time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
+        if (time_used > SPEEDTEST_DURATION)
+        {
+            thread_all_stop = 1;
+        }
         for (i = 0; i < THREAD_NUMBER; i++)
         {
             memcpy(&thread[i].servinfo, &nearest_server->servinfo, sizeof(struct sockaddr_in));

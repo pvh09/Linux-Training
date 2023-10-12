@@ -3,7 +3,6 @@
 extern float start_dl_time, stop_dl_time, start_ul_time, stop_ul_time;
 extern long int total_dl_size, total_ul_size;
 extern int disable_real_time_reporting, compute_dl_speed, thread_all_stop;
-extern thread_t thread[THREAD_NUMBER];
 extern pthread_mutex_t pthread_mutex;
 
 void *calculate_dl_speed_thread()
@@ -21,7 +20,6 @@ void *calculate_dl_speed_thread()
         }
         usleep(500000);
 
-        printf("\nthread_all_stop: %d\n", thread_all_stop);
         if (thread_all_stop)
         {
             stop_dl_time = get_uptime();
@@ -29,8 +27,16 @@ void *calculate_dl_speed_thread()
             dl_speed = (double)total_dl_size / 1000 / 1000 / duration * 8;
             if (duration > 0)
             {
-                printf("Download speed: %0.2lf Mbps", dl_speed);
-                fflush(stdout);
+                if (!disable_real_time_reporting)
+                {
+                     printf("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\bDownload speed: %0.2lf Mbps", dl_speed);
+                     fflush(stdout);
+                }
+                else
+                {
+                    printf("Download speed: %0.2lf Mbps", dl_speed);
+                    fflush(stdout);
+                }
             }
             break;
         }
@@ -137,11 +143,14 @@ err:
 
 int speedtest_download(server_data_t *nearest_server)
 {
-
+    clock_t start = 0;
+    clock_t end = 0;
+    double time_used = 0;
     const char download_filename[64] = "random3500x3500.jpg"; // 23MB
     char url[128] = {0}, request_url[128] = {0}, dummy[128] = {0}, buf[128];
     char *ptr = NULL;
     int i;
+
 
     sscanf(nearest_server->url, "http://%[^/]/%s", dummy, request_url);
     strncpy(url, request_url, sizeof(request_url));
@@ -165,10 +174,18 @@ int speedtest_download(server_data_t *nearest_server)
         }
         ptr = strtok(NULL, "/");
     }
-
+    start = clock();
     start_dl_time = get_uptime();
     while (1)
     {
+        end = clock();
+        time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
+         //printf("%f\n", time_used);
+        if (time_used > SPEEDTEST_DURATION)
+        {
+            thread_all_stop = 1;
+        }
+        
         for (i = 0; i < THREAD_NUMBER; i++)
         {
             memcpy(&thread[i].servinfo, &nearest_server->servinfo, sizeof(struct sockaddr_in));
