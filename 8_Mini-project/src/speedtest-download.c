@@ -140,7 +140,7 @@ err:
     return NULL;
 }
 
-int speedtest_download(server_data_t *nearest_server)
+int speedtest_download(server_data_t *nearest_server, int thread_nums)
 {
     clock_t start = 0;
     clock_t end = 0;
@@ -186,7 +186,7 @@ int speedtest_download(server_data_t *nearest_server)
             thread_all_stop = 1;
         }
 
-        for (i = 0; i < THREAD_NUMBER; i++)
+        for (i = 0; i < thread_nums; i++)
         {
             memcpy(&thread[i].servinfo, &nearest_server->servinfo, sizeof(struct sockaddr_in));
             memcpy(&thread[i].domain_name, &nearest_server->domain_name, sizeof(nearest_server->domain_name));

@@ -4,6 +4,6 @@
 
 void *calculate_ul_speed_thread();
 void *upload_thread(void *arg);
-int speedtest_upload(server_data_t *nearest_server);
+int speedtest_upload(server_data_t *nearest_server, int thread_nums);
 
 #endif

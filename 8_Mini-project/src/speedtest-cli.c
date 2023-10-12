@@ -89,14 +89,14 @@ void run_proc(int thread_num, int protocol)
 
         print_nearest_servers_table(nearest_servers);
         pthread_create(&pid, NULL, calculate_dl_speed_thread, NULL);
-        speedtest_download(&nearest_servers[1]);
+        speedtest_download(&nearest_servers[1], thread_num);
 
         sleep(1);
         printf("\n");
 
         thread_all_stop = 0;
         pthread_create(&pid, NULL, calculate_ul_speed_thread, NULL);
-        speedtest_upload(&nearest_servers[1]);
+        speedtest_upload(&nearest_servers[1], thread_num);
         sleep(1);
         printf("\n");
     }

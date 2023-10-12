@@ -36,18 +36,10 @@ int parse_command_line(int argc, char **argv, int *num_threads, int *protocol, i
 
 int main(int argc, char **argv)
 {
-    int i, best_server_index;
-    client_data_t client_data;
-    server_data_t nearest_servers[NEAREST_SERVERS_NUM];
-    pthread_t pid;
-    struct sockaddr_in servinfo;
-    struct itimerval timerVal;
-
     // default setting
     int num_threads = 3;
-    int protocol = PROTOCOL_HTTPS; // Default is HTTPS
+    int protocol = PROTOCOL_HTTP; // Default is HTTPS
     int manual_mode = 0;
-
     if (parse_command_line(argc, argv, &num_threads, &protocol, &manual_mode) != 0)
     {
         return 1;
