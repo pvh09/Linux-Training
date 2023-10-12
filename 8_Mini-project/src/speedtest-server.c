@@ -210,10 +210,13 @@ int get_best_server(server_data_t *nearest_servers)
     return best_index;
 }
 
-
 void print_nearest_servers_table(server_data_t *nearest_servers)
 {
-    printf("=========================================================\n");
+    printf("=====================================================================================================================================================================\n");
+    // Print the table header
+    printf("%-70s %-15s %-15s %-15s %-15s %-15s %-15s\n",
+           "URL", "Latitude", "Longitude", "Name", "Country", "Distance (km)", "Latency (us)");
+    printf("=====================================================================================================================================================================\n");
     for (int i = 0; i < NEAREST_SERVERS_NUM; i++)
     {
         printf("%-70s %-15.2f %-15.2f %-15s %-15s %-15.2f %-15i\n", nearest_servers[i].url,
@@ -224,5 +227,5 @@ void print_nearest_servers_table(server_data_t *nearest_servers)
                nearest_servers[i].distance,
                nearest_servers[i].latency);
     }
-    printf("=========================================================\n");
+    printf("=====================================================================================================================================================================\n");
 }

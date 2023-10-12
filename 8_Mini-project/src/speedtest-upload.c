@@ -3,6 +3,7 @@
 extern float start_dl_time, stop_dl_time, start_ul_time, stop_ul_time;
 extern long int total_dl_size, total_ul_size;
 extern int disable_real_time_reporting, compute_dl_speed, thread_all_stop;
+extern thread_t thread[THREAD_NUMBER];
 extern pthread_mutex_t pthread_mutex;
 
 void *calculate_ul_speed_thread()
@@ -12,7 +13,6 @@ void *calculate_ul_speed_thread()
     {
         stop_ul_time = get_uptime();
         duration = stop_ul_time - start_ul_time;
-        // ul_speed = (double)total_ul_size/1024/1024/duration*8;
         ul_speed = (double)total_ul_size / 1000 / 1000 / duration * 8;
         if (duration > 0 && !disable_real_time_reporting)
         {

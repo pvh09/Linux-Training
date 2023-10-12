@@ -3,6 +3,7 @@
 extern float start_dl_time, stop_dl_time, start_ul_time, stop_ul_time;
 extern long int total_dl_size, total_ul_size;
 extern int disable_real_time_reporting, compute_dl_speed, thread_all_stop;
+thread_t thread[THREAD_NUMBER];
 extern pthread_mutex_t pthread_mutex;
 
 void *calculate_dl_speed_thread()
