@@ -4,22 +4,22 @@
 
 typedef struct client_data
 {
-    char ipAddr[128];
+    char ipAddr[MAX_SIZE];
     double latitude;
     double longitude;
-    char isp[128];
+    char isp[MAX_SIZE];
 } client_data_t;
 
 typedef struct server_data
 {
-    char url[128];
+    char url[MAX_SIZE];
     double latitude;
     double longitude;
-    char name[128];
-    char country[128];
+    char name[MAX_SIZE];
+    char country[MAX_SIZE];
     double distance;
     int latency;
-    char domain_name[128];
+    char domain_name[MAX_SIZE];
     struct sockaddr_in servinfo;
 } server_data_t;
 

@@ -30,8 +30,8 @@ void *calculate_dl_speed_thread()
             {
                 if (!disable_real_time_reporting)
                 {
-                     printf("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\bDownload speed: %0.2lf Mbps", dl_speed);
-                     fflush(stdout);
+                    printf("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\bDownload speed: %0.2lf Mbps", dl_speed);
+                    fflush(stdout);
                 }
                 else
                 {
@@ -56,7 +56,8 @@ void *download_thread(void *arg)
     int i = t_arg->thread_index;
 
     int fd;
-    char sbuf[256] = {0}, rbuf[DL_BUFFER_SIZE];
+    char sbuf[MAX_SIZE] = {0};
+    char rbuf[DL_BUFFER_SIZE] = {0};
     fd_set fdSet;
 
     if ((fd = socket(thread[i].servinfo.sin_family, SOCK_STREAM, 0)) == -1)
@@ -127,9 +128,6 @@ void *download_thread(void *arg)
         if (elapsed_time > 0.0)
         {
             double download_speed_bps = (double)total_dl_size / elapsed_time;
-            // printf("Dow: %f\n", download_speed_bps);
-            //  Convert to desired units (Kbps, Mbps, etc.)
-            //  Display or store download_speed_bps
         }
     }
 
@@ -148,10 +146,12 @@ int speedtest_download(server_data_t *nearest_server)
     clock_t end = 0;
     double time_used = 0;
     const char download_filename[64] = "random3500x3500.jpg"; // 23MB
-    char url[128] = {0}, request_url[128] = {0}, dummy[128] = {0}, buf[128];
+    char url[MAX_SIZE] = {0};
+    char request_url[MAX_SIZE] = {0};
+    char dummy[MAX_SIZE] = {0};
+    char buf[MAX_SIZE] = {0};
     char *ptr = NULL;
     int i;
-
 
     sscanf(nearest_server->url, "http://%[^/]/%s", dummy, request_url);
     strncpy(url, request_url, sizeof(request_url));
@@ -181,12 +181,11 @@ int speedtest_download(server_data_t *nearest_server)
     {
         end = clock();
         time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
-         //printf("%f\n", time_used);
         if (time_used > SPEEDTEST_DURATION)
         {
             thread_all_stop = 1;
         }
-        
+
         for (i = 0; i < THREAD_NUMBER; i++)
         {
             memcpy(&thread[i].servinfo, &nearest_server->servinfo, sizeof(struct sockaddr_in));

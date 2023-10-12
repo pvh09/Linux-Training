@@ -35,14 +35,14 @@
 #define DL_BUFFER_SIZE 8192
 #define PROTOCOL_HTTP 1
 #define PROTOCOL_HTTPS 2
-
+#define MAX_SIZE 256
 typedef struct thread
 {
     int thread_index;
     int running;
     pthread_t tid;
-    char domain_name[128];
-    char request_url[128];
+    char domain_name[MAX_SIZE];
+    char request_url[MAX_SIZE];
 
     struct sockaddr_in servinfo;
 } thread_t;

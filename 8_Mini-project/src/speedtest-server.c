@@ -18,7 +18,7 @@ double calcDistance(double lat1, double lon1, double lat2, double lon2)
 int get_ip_address_position(char *fileName, client_data_t *client_data)
 {
     FILE *fp = NULL;
-    char filePath[128] = {0}, line[512] = {0}, lat[64] = {0}, lon[64] = {0};
+    char filePath[MAX_SIZE] = {0}, line[MAX_SIZE] = {0}, lat[MAX_SIZE] = {0}, lon[MAX_SIZE] = {0};
     sprintf(filePath, "%s%s", FILE_DIRECTORY_PATH, fileName);
 
     if ((fp = fopen(filePath, "r")) != NULL)
@@ -43,7 +43,7 @@ int get_ip_address_position(char *fileName, client_data_t *client_data)
 int get_nearest_server(double lat_c, double lon_c, server_data_t *nearest_servers)
 {
     FILE *fp = NULL;
-    char filePath[128] = {0}, line[512] = {0}, url[128] = {0}, lat[64] = {0}, lon[64] = {0}, name[128] = {0}, country[128] = {0};
+    char filePath[MAX_SIZE] = {0}, line[MAX_SIZE] = {0}, url[MAX_SIZE] = {0}, lat[MAX_SIZE] = {0}, lon[MAX_SIZE] = {0}, name[MAX_SIZE] = {0}, country[MAX_SIZE] = {0};
     double lat_s, lon_s, distance;
     int count = 0, i = 0, j = 0;
 
@@ -115,8 +115,8 @@ int get_best_server(server_data_t *nearest_servers)
     int i = 0, latency, best_index = -1;
     char latency_name[16] = "latency.txt";
     char latency_file_string[16] = "test=test";
-    char latency_url[NEAREST_SERVERS_NUM][128], latency_request_url[128];
-    char url[128], buf[128], filePath[64] = {0}, line[64] = {0};
+    char latency_url[NEAREST_SERVERS_NUM][MAX_SIZE], latency_request_url[MAX_SIZE];
+    char url[MAX_SIZE], buf[MAX_SIZE], filePath[MAX_SIZE] = {0}, line[MAX_SIZE] = {0};
     struct timeval tv1, tv2;
     struct sockaddr_in servinfo;
 

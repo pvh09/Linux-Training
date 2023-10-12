@@ -92,8 +92,8 @@ int get_ipv4_https_addr(char *domain_name, struct sockaddr_in *servinfo)
 int get_http_file(struct sockaddr_in *serv, char *domain_name, char *request_url, char *filename)
 {
     int fd;
-    char sbuf[256] = {0}, tmp_path[128] = {0};
-    char rbuf[8192];
+    char sbuf[MAX_SIZE] = {0}, tmp_path[MAX_SIZE] = {0};
+    char rbuf[UL_BUFFER_SIZE];
     struct timeval tv;
     fd_set fdSet;
     FILE *fp = NULL;
@@ -184,8 +184,8 @@ int get_http_file(struct sockaddr_in *serv, char *domain_name, char *request_url
 int get_https_file(struct sockaddr_in *serv, char *domain_name, char *request_url, char *filename)
 {
     int fd;
-    char sbuf[256] = {0}, tmp_path[128] = {0};
-    char rbuf[8192];
+    char sbuf[MAX_SIZE] = {0}, tmp_path[MAX_SIZE] = {0};
+    char rbuf[UL_BUFFER_SIZE];
     struct timeval tv;
     fd_set fdSet;
     FILE *fp = NULL;
