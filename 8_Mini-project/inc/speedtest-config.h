@@ -18,6 +18,7 @@
 #include <openssl/err.h>
 #include <openssl/x509.h>
 #include <openssl/evp.h>
+#include <stdbool.h>
 
 #define SPEEDTEST_DOMAIN_NAME "www.speedtest.net"
 #define CONFIG_REQUEST_URL "speedtest-config.php"
@@ -26,9 +27,9 @@
 #define SERVERS_LOCATION_REQUEST_URL "speedtest-servers-static.php?"
 
 #define FILE_DIRECTORY_PATH "/tmp/"
-#define NEAREST_SERVERS_NUM 3
-#define THREAD_NUMBER 4
-#define SPEEDTEST_DURATION 5
+#define NEAREST_SERVERS_NUM 5
+#define THREAD_NUMBER 8
+#define SPEEDTEST_DURATION 10
 
 #define UL_BUFFER_SIZE 8192
 #define UL_BUFFER_TIMES 10240
@@ -42,7 +43,7 @@ typedef struct thread
     int running;
     pthread_t tid;
     char domain_name[MAX_SIZE];
-    char request_url[MAX_SIZE];
+    char request_url[1024];
 
     struct sockaddr_in servinfo;
 } thread_t;

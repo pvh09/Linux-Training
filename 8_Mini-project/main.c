@@ -39,7 +39,9 @@ int main(int argc, char **argv)
     // default setting
     int num_threads = 3;
     int protocol = PROTOCOL_HTTP; // Default is HTTPS
-    int manual_mode = 0;
+    int manual_mode = 1;
+    bool check_server = false;
+    
     if (parse_command_line(argc, argv, &num_threads, &protocol, &manual_mode) != 0)
     {
         return 1;
@@ -48,7 +50,7 @@ int main(int argc, char **argv)
     printf("=========================================================\n");
     printf("Number of threads: %d\n", num_threads);
     printf("Protocol: %s\n", protocol == PROTOCOL_HTTP ? "HTTP" : "HTTPS");
-    printf("Manual mode: %s\n", manual_mode ? "Enabled" : "Disabled");
+    printf("Manual mode: %s\n", manual_mode ? "Best server" : "Manual server");
 
     run_proc(num_threads, protocol);
 

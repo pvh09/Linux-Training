@@ -56,7 +56,7 @@ void *download_thread(void *arg)
     int i = t_arg->thread_index;
 
     int fd;
-    char sbuf[MAX_SIZE] = {0};
+    char sbuf[DL_BUFFER_SIZE] = {0};
     char rbuf[DL_BUFFER_SIZE] = {0};
     fd_set fdSet;
 

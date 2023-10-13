@@ -49,7 +49,8 @@ void *calculate_ul_speed_thread()
 void *upload_thread(void *arg)
 {
     int fd;
-    char data[UL_BUFFER_SIZE], sbuf[512];
+    char data[UL_BUFFER_SIZE] = {0};
+    char sbuf[DL_BUFFER_SIZE] = {0};
     int i, j, size = 0;
     struct timeval tv;
     fd_set fdSet;
